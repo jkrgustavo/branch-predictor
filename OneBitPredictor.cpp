@@ -40,7 +40,11 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    ifstream file(argv[1]);
+    string folder = "traces/";
+    string filename = argv[1];
+    string fullPath = folder + filename;
+
+    ifstream file(fullPath);
     if (!file) {
         cerr << "Error: Could not open file." << endl;
         return 1;
