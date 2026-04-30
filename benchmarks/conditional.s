@@ -22,28 +22,38 @@ loop:
     bl kindaRandom
     mov x21, x0
 
-    and x1, x21, #16     // use 4th bit
+    and x1, x21, #16     // shared condition bit
 
 conditional_branch_1:
     cbnz x1, if_taken_1
 
-else_if_1:
+branch_1_not_taken:
     adrp x0, conditional_branch_1@PAGE
     add x0, x0, conditional_branch_1@PAGEOFF
     mov x1, #0
 
     bl printTrace
 
-    and x1, x21, #8     // use 3rd bit
+    b test_branch_2
+
+if_taken_1:
+    adrp x0, conditional_branch_1@PAGE
+    add x0, x0, conditional_branch_1@PAGEOFF
+    mov x1, #1
+
+    bl printTrace
+
+test_branch_2:
+    // Recompute condition
+    and x1, x21, #16
 
 conditional_branch_2:
-    cbnz x1, if_taken_2
+    cbz x1, if_taken_2       // opposite of branch 1
 
-else_if_2:
+branch_2_not_taken:
     adrp x0, conditional_branch_2@PAGE
     add x0, x0, conditional_branch_2@PAGEOFF
     mov x1, #0
-
     bl printTrace
 
     b after
@@ -52,16 +62,6 @@ if_taken_2:
     adrp x0, conditional_branch_2@PAGE
     add x0, x0, conditional_branch_2@PAGEOFF
     mov x1, #1
-
-    bl printTrace
-
-    b after
-
-if_taken_1:
-    adrp x0, conditional_branch_1@PAGE
-    add x0, x0, conditional_branch_1@PAGEOFF
-    mov x1, #1
-
     bl printTrace
 
     b after
@@ -77,5 +77,4 @@ done:
     ldp x29, x30, [sp], #16
 
     mov w0, #0
-
     ret
