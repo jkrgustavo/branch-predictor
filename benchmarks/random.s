@@ -15,7 +15,7 @@ _main:
     str x21, [x29, #-24]
 
     mov x19, #0
-    mov x20, #10
+    mov x20, #1000
     mov x21, #0x1F45
 
 loop:

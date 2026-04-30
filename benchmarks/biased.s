@@ -19,11 +19,11 @@ _main:
     str x23, [x29, #-40]
 
     mov x19, #0
-    mov x20, #10
+    mov x20, #1000
 
 loop:
     // x21 = x19 % 6
-    mov x22, #6
+    mov x22, #75
     udiv x23, x19, x22
     msub x21, x23, x22, x19
 

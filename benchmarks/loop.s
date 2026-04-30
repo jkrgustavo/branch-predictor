@@ -11,7 +11,7 @@ _main:
     stp x19, x20, [sp, #-16]!
 
     mov x19, #0
-    mov x20, #10
+    mov x20, #1000
 
     b loop
 

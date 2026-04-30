@@ -14,7 +14,7 @@ _main:
     str x21, [sp]
 
     mov x19, #0     // loop control
-    mov x20, #10    // num iterations
+    mov x20, #1000    // num iterations
 
 loop:
     and x21, x19, #1
