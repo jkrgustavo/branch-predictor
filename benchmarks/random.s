@@ -16,7 +16,7 @@ _main:
 
     mov x19, #0
     mov x20, #10
-    mov x21, #23
+    mov x21, #0x1F45
 
 loop:
     mov x0, x21
