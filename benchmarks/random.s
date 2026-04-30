@@ -31,6 +31,7 @@ random_branch:
 not_taken:
     adrp x0, random_branch@PAGE
     add x0, x0, random_branch@PAGEOFF
+    // x1 is already 1 if taken, 0 if not
 
     bl printTrace
 
@@ -39,6 +40,7 @@ not_taken:
 taken:
     adrp x0, random_branch@PAGE
     add x0, x0, random_branch@PAGEOFF
+    // x1 is already 1 if taken, 0 if not
 
     bl printTrace
 
