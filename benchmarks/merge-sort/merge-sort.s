@@ -24,7 +24,7 @@ _init_array:
     // x11 -> curr elm ptr
     // x12 -> arr end ptr
     // x13 -> "random" value
-    // x14-x16 -> mod 10000
+    // x14-x16 -> mod 1000
     LOAD_ADDR x9, array
 
     LOAD_ADDR x10, N
@@ -55,8 +55,8 @@ _init_array:
         bl kindaRandom
         str x0, [x29, #-40]     // save seed
 
-        // use seed to calc val [0, 10000]
-        mov x14, #10001
+        // use seed to calc val [0, 1000]
+        mov x14, #1001
         udiv x15, x0, x14
         msub x16, x15, x14, x0  // x16 = x0 % 1001
 
@@ -137,9 +137,6 @@ _main:
 
     bl _merge_sort
 
-    bl _print_array
-
-
     done:
         ldp x29, x30, [sp], #16
         mov w0, #0
@@ -172,13 +169,19 @@ _merge_sort:
 
     loop_merge_sort:
         cmp x22, x21
-        bge done_merge_sort
+        cset x28, ge
+        TRACE_BRANCH branch_width_ge_n, x28
+        branch_width_ge_n:
+        cbnz x28, done_merge_sort
 
         mov x23, #0
 
         inner_loop_merge_sort:
             cmp x23, x21
-            bge inner_loop_merge_sort_done
+            cset x28, ge
+            TRACE_BRANCH branch_left_ge_n, x28
+            branch_left_ge_n:
+            cbnz x28, inner_loop_merge_sort_done
 
             add x26, x23, x22
             cmp x26, x21
@@ -199,6 +202,8 @@ _merge_sort:
             lsl x26, x22, #1
             add x23, x23, x26
             
+            TRACE_BRANCH branch_continue_inner_merge_sort, #1
+            branch_continue_inner_merge_sort:
             b inner_loop_merge_sort
 
     inner_loop_merge_sort_done:
@@ -206,18 +211,25 @@ _merge_sort:
         mov x26, #0     // array idx
         copy_loop:
             cmp x26, x21
-            bge copy_loop_done
+            cset x28, ge
+            TRACE_BRANCH branch_copy_idx_ge_n, x28
+            branch_copy_idx_ge_n:
+            cbnz x28, copy_loop_done
 
             ldr w27, [x20, x26, lsl 2]
             str w27, [x19, x26, lsl 2]
 
             add x26, x26, #1
 
+            TRACE_BRANCH branch_continue_copy_loop, #1
+            branch_continue_copy_loop:
             b copy_loop
 
         copy_loop_done:
 
         lsl x22, x22, #1
+        TRACE_BRANCH branch_continue_outer_merge_sort, #1
+        branch_continue_outer_merge_sort:
         b loop_merge_sort
 
 done_merge_sort:
@@ -231,10 +243,10 @@ done_merge_sort:
     ret
 
 .data
-    N: .word 2048
+    N: .word 1024
 
-    array: .space 8192
-    temp: .space 8192
+    array: .space 4096
+    temp: .space 4096
 
 .section __TEXT,__cstring
     fmt: .asciz "%d, "

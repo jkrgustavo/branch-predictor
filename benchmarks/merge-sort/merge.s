@@ -32,19 +32,13 @@ _merge:
     // x24 -> i (left)
     // x25 -> j (mid)
     // x26 -> k (left)
+    // x27 -> branch condition result for tracing
     stp x19, x20, [sp, #-16]!
     stp x21, x22, [sp, #-16]!
     stp x23, x24, [sp, #-16]!
     stp x25, x26, [sp, #-16]!
-    # sub sp, sp, #64
-    # str x19, [x29, #-8]
-    # str x20, [x29, #-16]
-    # str x21, [x29, #-24]
-    # str x22, [x29, #-32]
-    # str x23, [x29, #-40]
-    # str x24, [x29, #-48]
-    # str x25, [x29, #-56]
-    # str x26, [x29, #-64]
+    stp x27, x28, [sp, #-16]!
+
 
     mov x19, x0
     mov x20, x1
@@ -57,33 +51,51 @@ _merge:
 
     merge_loop_compare:
         cmp x24, x22
-        bge merge_loop_right            // if i >= mid, finish right array
+        cset x27, ge
+        TRACE_BRANCH branch_i_ge_mid, x27
+        branch_i_ge_mid:
+        cbnz x27, merge_loop_right      // if i >= mid, finish right array
 
         cmp x25, x23
-        bge merge_loop_left             // if j >= right, finish left array
+        cset x27, ge
+        TRACE_BRANCH branch_j_ge_right, x27
+        branch_j_ge_right:
+        cbnz x27, merge_loop_left       // if j >= right, finish left array
 
         ldr w9, [x19, x24, lsl 2]       // w9  -> array[i]
         ldr w10, [x19, x25, lsl 2]      // w10 -> array[j]
         cmp w9, w10
-        bgt greater_than
+        cset x27, gt
+        TRACE_BRANCH branch_left_gt_right, x27
+        branch_left_gt_right:
+        cbnz x27, greater_than
 
         less_than_or_equal:
             str w9, [x20, x26, lsl 2]   // temp[k] = array[i]
             add x24, x24, #1
+            TRACE_BRANCH branch_lte_to_endif, #1
+            branch_lte_to_endif:
             b endif_compare
             
         greater_than:
             str w10, [x20, x26, lsl 2]  // temp[k] = array[j]
             add x25, x25, #1
+            TRACE_BRANCH branch_gt_to_endif, #1
+            branch_gt_to_endif:
             b endif_compare
 
         endif_compare:
             add x26, x26, #1
+            TRACE_BRANCH branch_endif_to_compare, #1
+            branch_endif_to_compare:
             b merge_loop_compare
 
     merge_loop_left:
         cmp x24, x22
-        bge done_merge
+        cset x27, ge
+        TRACE_BRANCH branch_left_done, x27
+        branch_left_done:
+        cbnz x27, done_merge
 
         ldr w9, [x19, x24, lsl 2]
         str w9, [x20, x26, lsl 2]
@@ -91,11 +103,16 @@ _merge:
         add x24, x24, #1
         add x26, x26, #1
 
+        TRACE_BRANCH branch_left_loop, #1
+        branch_left_loop:
         b merge_loop_left
 
     merge_loop_right:
         cmp x25, x23
-        bge done_merge
+        cset x27, ge
+        TRACE_BRANCH branch_right_done, x27
+        branch_right_done:
+        cbnz x27, done_merge
 
         ldr w10, [x19, x25, lsl 2]
         str w10, [x20, x26, lsl 2]
@@ -103,9 +120,12 @@ _merge:
         add x25, x25, #1
         add x26, x26, #1
 
+        TRACE_BRANCH branch_right_loop, #1
+        branch_right_loop:
         b merge_loop_right
 
 done_merge:
+    ldp x27, x28, [sp], #16
     ldp x25, x26, [sp], #16
     ldp x23, x24, [sp], #16
     ldp x21, x22, [sp], #16
