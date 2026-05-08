@@ -30,10 +30,8 @@ for file in "$BENCH_DIR"/*.s; do
 
     name=$(basename "$file" .s)
 
-    echo "building $name..."
     clang "$file" "$BENCH_DIR/print-trace.s" "$BENCH_DIR/kinda-random.s" -o "$BUILD_DIR/$name"
 
-    echo "running $name..."
     "$BUILD_DIR/$name" > "$OUTPUT_DIR/$name.txt"
 
     echo "Wrote $OUTPUT_DIR/$name.txt"
