@@ -36,3 +36,18 @@ for file in "$BENCH_DIR"/*.s; do
 
     echo "Wrote $OUTPUT_DIR/$name.txt"
 done
+
+MERGE_SORT_DIR="$BENCH_DIR/merge-sort"
+MERGE_SORT_EXE="$BUILD_DIR/merge-sort"
+MERGE_SORT_TRACE="$OUTPUT_DIR/merge-sort.txt"
+
+clang \
+    "$MERGE_SORT_DIR/merge-sort.s" \
+    "$MERGE_SORT_DIR/merge.s" \
+    "$BENCH_DIR/print-trace.s" \
+    "$BENCH_DIR/kinda-random.s" \
+    -o "$MERGE_SORT_EXE"
+
+"$MERGE_SORT_EXE" > "$MERGE_SORT_TRACE"
+
+echo "Wrote $MERGE_SORT_TRACE"
