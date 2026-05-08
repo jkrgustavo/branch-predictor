@@ -24,7 +24,7 @@ _init_array:
     // x11 -> curr elm ptr
     // x12 -> arr end ptr
     // x13 -> "random" value
-    // x14-x16 -> mod 1000
+    // x14-x16 -> mod 10000
     LOAD_ADDR x9, array
 
     LOAD_ADDR x10, N
@@ -55,8 +55,8 @@ _init_array:
         bl kindaRandom
         str x0, [x29, #-40]     // save seed
 
-        // use seed to calc val [0, 1000]
-        mov x14, #1001
+        // use seed to calc val [0, 10000]
+        mov x14, #10001
         udiv x15, x0, x14
         msub x16, x15, x14, x0  // x16 = x0 % 1001
 
@@ -108,7 +108,8 @@ _print_array:
         str x11, [x29, #-24]    // save curr-elm ptr
 
         ldr w13, [x11]
-        str w13, [x29, #-48]   // variadic arg, save to top of the stack
+        sxtw x13, w13
+        str x13, [x29, #-48]   // variadic arg, save to top of the stack
 
         LOAD_ADDR x0, fmt       // named arg, stays in x0
 
@@ -134,6 +135,8 @@ _main:
 
     bl _init_array    // init array with vals [0, 1000]
 
+    bl _merge_sort
+
     bl _print_array
 
 
@@ -142,13 +145,96 @@ _main:
         mov w0, #0
         ret
 
+_merge_sort:
+    stp x29, x30, [sp, #-16]!
+    mov x29, sp
 
+    // x19 -> array ptr
+    // x20 -> temp array ptr
+    // x21 -> array size
+    // x22 -> width
+    // x23 -> left idx
+    // x24 -> mid idx
+    // x25 -> right idx
+    // x26-x28 -> scratch
+    stp x19, x20, [sp, #-16]!
+    stp x21, x22, [sp, #-16]!
+    stp x23, x24, [sp, #-16]!
+    stp x25, x26, [sp, #-16]!
+    stp x27, x28, [sp, #-16]!
+    LOAD_ADDR x19, array
+    LOAD_ADDR x20, temp
+
+    LOAD_ADDR x21, N
+    ldr w21, [x21]
+
+    mov x22, #1
+
+    loop_merge_sort:
+        cmp x22, x21
+        bge done_merge_sort
+
+        mov x23, #0
+
+        inner_loop_merge_sort:
+            cmp x23, x21
+            bge inner_loop_merge_sort_done
+
+            add x26, x23, x22
+            cmp x26, x21
+            csel x24, x26, x21, lt
+
+            mov x27, #2
+            madd x25, x22, x27, x23
+            cmp x25, x21
+            csel x25, x25, x21, lt
+            
+            mov x0, x19
+            mov x1, x20
+            mov x2, x23
+            mov x3, x24
+            mov x4, x25
+            bl _merge
+
+            lsl x26, x22, #1
+            add x23, x23, x26
+            
+            b inner_loop_merge_sort
+
+    inner_loop_merge_sort_done:
+
+        mov x26, #0     // array idx
+        copy_loop:
+            cmp x26, x21
+            bge copy_loop_done
+
+            ldr w27, [x20, x26, lsl 2]
+            str w27, [x19, x26, lsl 2]
+
+            add x26, x26, #1
+
+            b copy_loop
+
+        copy_loop_done:
+
+        lsl x22, x22, #1
+        b loop_merge_sort
+
+done_merge_sort:
+    ldp x27, x28, [sp], #16
+    ldp x25, x26, [sp], #16
+    ldp x23, x24, [sp], #16
+    ldp x21, x22, [sp], #16
+    ldp x19, x20, [sp], #16
+    ldp x29, x30, [sp], #16
+
+    ret
 
 .data
-    N: .word 1024
+    N: .word 2048
 
-    array: .space 4096
-    temp: .space 4096
+    array: .space 8192
+    temp: .space 8192
 
 .section __TEXT,__cstring
-    fmt: .asciz "%d\n"
+    fmt: .asciz "%d, "
